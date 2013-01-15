@@ -1,293 +1,354 @@
-/**
- * The 'engine' package encloses every functionality the engine has and provides.
- */
 package com.lambda;
 
 import org.lwjgl.LWJGLException;
-import org.lwjgl.Sys;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
-import org.lwjgl.opengl.GL11;
+import static org.lwjgl.opengl.GL11.*;
 
 /**
- * The 'GameContainer' class is used as a container for a 'Game'.
- * It provides options to change resolutions or fullscreen options.
+ * The 'GameContainer' holds a 'Game' and displays it.
  * 
  * @author alex
- *
+ * 
  */
-public class GameContainer {
+class GameContainer {
 
 	/**
-	 * The default width if none is specified for the 'GameContainer'.
-	 */
-	public static final int DEF_WIDTH = 1024;
-	
-	/**
-	 * The default height if none is specified for the 'GameContainer'.
-	 */
-	public static final int DEF_HEIGHT = 768;
-	
-	/**
-	 * The default frame rate if none is specified for the 'GameContainer'.
-	 */
-	public static final int DEF_FPS = 60;
-	
-	/**
-	 * The 'Game' the container is going to run.
+	 * The 'Game' the 'GameContainer' holds and displays.
 	 */
 	protected Game game;
-	
+
 	/**
-	 * The 'DisplayMode' the 'GameContainer' runs at.
+	 * The title of the 'GameContainer'.
 	 */
-	protected DisplayMode displayMode;
-	
+	protected String title;
+
 	/**
-	 * Whether vSync is enabled for the 'GameContainer'.
+	 * The width of the 'GameContainer'.
 	 */
-	protected boolean vSyncEnabled;
-	
+	protected int width;
+
 	/**
-	 * Whether the 'GameContainer' is running in fullscreen.
+	 * The height of the 'GameContainer'.
 	 */
-	protected boolean isFullscreen;
-	
+	protected int height;
+
 	/**
-	 * The frames per second the 'GameContainer' renders.
+	 * The vertical sync option of the 'GameContainer'.
 	 */
-	protected int frames;
-	
+	protected boolean vSync = false;
+
 	/**
-	 * The current framerate.
+	 * The fullscreen option of the 'GameContainer'.
 	 */
-	private int fps;
+	protected boolean fullScreen = false;
 	
 	/**
-	 * The point in time the last frame was fully rendered.
+	 * The framerate the 'GameContainer' will try to render at.
 	 */
-	private long lastFrame;
-	
+	protected int frameRate = 60;
+
 	/**
-	 * The point in time the last framerate was measured.
+	 * Whether the closing of the 'GameContainer' has been requested.
 	 */
-	private long lastFPS;
+	protected boolean closeRequested = false;
 	
 	/**
-	 * Creates a new 'GameContainer' that holds the 'Game' app.
+	 * The last time the frame counter was updated at.
+	 */
+	private long lastCounterTime = 0;
+	
+	/**
+	 * Creates a new 'GameContainer' that will hold the 'Game' game. The 'Game'
+	 * may not be 'null', otherwise an LambdaException will be thrown.
 	 * 
-	 * @param app The 'Game' the 'GameContainer' holds.
+	 * @param game
+	 *            The 'Game' the 'GameContainer' will hold.
 	 */
-	public GameContainer(Game app) {
-		this.game = app;
+	public GameContainer(Game game, int width, int height)
+			throws LambdaException {
+		if (width >= 0) {
+			this.width = width;
+		} else {
+			this.width = 0;
+		}
+
+		if (height >= 0) {
+			this.height = height;
+		} else {
+			this.height = 0;
+		}
+
+		if (game != null) {
+			this.game = game;
+		} else {
+			throw new LambdaException("Game not initialised.");
+		}
+	}
+
+	/**
+	 * Creates a new 'Display' with the specified size and options.
+	 */
+	protected void create() {
+		changeMode(width, height, fullScreen);
 		
-		displayMode = new DisplayMode(DEF_WIDTH, DEF_HEIGHT);
-		vSyncEnabled = false;
-		isFullscreen = false;
-		frames = DEF_FPS;
+		Display.setVSyncEnabled(vSync);
+	}
+
+	/**
+	 * Changes the 'DisplayMode' of the 'GameContainer'.
+	 * 
+	 * @param width The width of the new 'DisplayMode'.
+	 * @param height The height of the new 'DisplayMode'.
+	 * @param fullscreen Whether the 'GameContainer' is in fullscreen mode.
+	 */
+	protected void changeMode(int width, int height, boolean fullscreen) {
+		if((width != Display.getWidth()) && (height != Display.getHeight()) && (fullscreen != Display.isFullscreen())) {
+			try {
+				DisplayMode target = null;
+				
+				if(fullscreen == true) {
+					DisplayMode[] modes = Display.getAvailableDisplayModes();
+					int freq = 0;
+					
+					boolean found = false;
+					for(int i = 0; i < modes.length && !found; i++) {
+						DisplayMode current = modes[i];
+						
+						if((current.getWidth() == width) && (current.getHeight() == height)) {
+							if((target == null) || (current.getFrequency() >= freq)) {
+								if((target == null) || (current.getBitsPerPixel() > target.getBitsPerPixel())) {
+									target = current;
+									freq = target.getFrequency();
+								}
+							}
+							
+							if((current.getBitsPerPixel() == Display.getDesktopDisplayMode().getBitsPerPixel()) &&
+									(current.getFrequency() == Display.getDesktopDisplayMode().getFrequency())) {
+								target = current;
+								found = true;
+							}
+						} 
+					} 
+				} else {
+					target = new DisplayMode(width, height);
+				}
+				
+				if(target != null) {
+					Display.setDisplayMode(target);
+					Display.setFullscreen(fullscreen);
+				}
+			} catch(LWJGLException e) {
+				
+			}
+		}
+	}
+
+	/**
+	 * Initializes the OpenGL environment for the 'GameContainer'.
+	 */
+	protected void initOpenGL() {
+		glMatrixMode(GL_PROJECTION);
+
+		glLoadIdentity();
+
+		glOrtho(0, Display.getWidth(), 0, Display.getHeight(), -1, 1);
+
+		glViewport(0, 0, Display.getWidth(), Display.getHeight());
+		glMatrixMode(GL_MODELVIEW);
+
+		glEnable(GL_TEXTURE_2D);
+		glDisable(GL_DEPTH_TEST);
+
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		glLoadIdentity();
 	}
 	
 	/**
-	 * Starts the 'Game' and it's 'Container'.
-	 * 
-	 * @throws LWJGLException If 'Display' could not be set according
-	 * to the set values.
+	 * Starts the 'GameContainer' by setting it up and starting the loop.
 	 */
-	public void start() throws LWJGLException {
-		initDisplay();
+	public void start() {
+		create();
 		initOpenGL();
 		
 		loop();
 	}
 	
 	/**
-	 * Initializes the 'Display'.
-	 * 
-	 * @throws LWJGLException If 'Display' could not be set according
-	 * to the set values.
-	 */
-	protected void initDisplay() throws LWJGLException {
-		Display.setDisplayMode(displayMode);
-		Display.setVSyncEnabled(vSyncEnabled);
-		Display.setFullscreen(isFullscreen);
-		
-		Display.create();
-	}
-	
-	/**
-	 * Initializes the OpenGL environment.
-	 */
-	protected void initOpenGL() {
-		GL11.glMatrixMode(GL11.GL_PROJECTION);
-		GL11.glLoadIdentity();
-		GL11.glOrtho(0, Display.getWidth(), 0, Display.getHeight(), -1, 1);
-		GL11.glMatrixMode(GL11.GL_MODELVIEW);
-		
-		GL11.glEnable(GL11.GL_TEXTURE_2D);
-		GL11.glDisable(GL11.GL_DEPTH_TEST);
-		
-		GL11.glEnable(GL11.GL_BLEND);
-		GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-		
-		GL11.glLoadIdentity();
-	}
-	
-	/**
-	 * The 'Game' loop. It calls the 'update()' - and 'render()' - methods for all objects in the 'Game'.
-	 */
-	protected void loop() {
-		init();
-		
-		getDelta();
-		lastFPS = getTime();
-		
-		while(!Display.isCloseRequested()) {
-			int delta = getDelta();
-			
-			update(delta);
-			render();
-			
-			Display.update();
-			Display.sync(frames);
-		}
-		
-		Display.destroy();
-	}
-	
-	/**
-	 * Calls the 'init()'-method of the 'Game'.
+	 * Calls the 'init-()'-method of the 'Game'.
 	 */
 	protected void init() {
 		game.init();
 	}
 	
 	/**
-	 * Configures some options then calls the 'render()'-method
-	 * of the 'Game'.
+	 * The loop the 'GameContainer' uses to update/render everything.
 	 */
-	protected void render() {
-		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
+	protected void loop() {
+		init();
 		
-		game.render();
-	}
-	
-	/**
-	 * Calls the 'update()'-method of the 'Game' then
-	 * updates the FPS counter.
-	 * 
-	 * @param delta The difference in time between the rendering of two frames.
-	 */
-	protected void update(int delta) {
-		game.update(delta);
+		long lastTime = System.nanoTime();
+		int fps = 0;
 		
-		updateFPS();
-	}
-	
-	/**
-	 * Updates the frames counter.
-	 */
-	private void updateFPS() {
-		if(getTime() - lastFPS > 1000) {
-			System.out.println("[FPS] " + fps);
-			fps = 0;
-			lastFPS += 1000;
+		while(!Display.isCloseRequested() || closeRequested) {
+			long now = System.nanoTime();
+			long diff = now - lastTime;
+			lastTime = now;
+			
+			double delta = diff / ((double) frameRate);
+			
+			lastCounterTime += diff;
+			fps++;
+			
+			if(lastCounterTime >= 1000000000) {
+				System.out.println("[FPS] " + fps);
+				lastCounterTime = 0;
+				fps = 0;
+			}
+			
+			game.update(delta);
+			
+			game.render();
+			
+			Display.update();
+			Display.sync(60);
 		}
-		fps++;
-	}
-	
-	/**
-	 * Gives back the time passed between the rendering of two frames.
-	 * 
-	 * @return The delta of two frames.
-	 */
-	private int getDelta() {
-		long time = getTime();
-		int delta = (int)(time - lastFrame);
-		lastFrame = time;
 		
-		return delta;
-	}
-	
-	/**
-	 * The current time in milliseconds.
-	 * 
-	 * @return The current time.
-	 */
-	private long getTime() {
-		return (Sys.getTime() * 1000) / Sys.getTimerResolution();
+		Display.destroy();
 	}
 
 	/**
-	 * Gives back the current 'DisplayMode' the 'GameContainer'
-	 * is running at.
+	 * Gives back the title of the 'GameContainer'.
 	 * 
-	 * @return The current 'DisplayMode'.
+	 * @return The title of the 'GameContainer'.
 	 */
-	public DisplayMode getDisplayMode() {
-		return displayMode;
+	public String getTitle() {
+		return title;
 	}
 
 	/**
-	 * Tells whether vSync is enabled for the 'GameContainer'.
+	 * Gives back the width of the 'GameContainer'.
 	 * 
-	 * @return 'true' if enabled, 'false' otherwise.
+	 * @return The width of the 'GameContainer'.
 	 */
-	public boolean isvSyncEnabled() {
-		return vSyncEnabled;
+	public int getWidth() {
+		return width;
 	}
 
 	/**
-	 * Tells whether the 'GameContainer' is running in 
-	 * fullscreen mode.
+	 * Gives back the height of the 'GameContainer'.
 	 * 
-	 * @return 'true' if in fullscreen mode, 'false' otherwise.
+	 * @return The height of the 'GameContainer'.
 	 */
-	public boolean isFullscreen() {
-		return isFullscreen;
+	public int getHeight() {
+		return height;
 	}
 
 	/**
-	 * Sets a new 'DisplayMode' for the 'GameContainer'.
+	 * Whether the vSync option for the 'GameContainer' is enabled.
 	 * 
-	 * @param displayMode The 'DisplayMode' to be set for the 'GameContainer'.
+	 * @return 'true' if the option is enabled, 'false' otherwise.
 	 */
-	public void setDisplayMode(DisplayMode displayMode) {
-		this.displayMode = displayMode;
+	public boolean isvSync() {
+		return vSync;
 	}
 
 	/**
-	 * Enables or disables the vSync option for the 'GameContainer'.
+	 * Whether the 'GameContainer' displays in fullscreen mode.
 	 * 
-	 * @param vSyncEnabled 'true' for enable, 'false' for disable.
+	 * @return 'true' if it's in fullscreen, 'false' otherwise.
 	 */
-	public void setvSyncEnabled(boolean vSyncEnabled) {
-		this.vSyncEnabled = vSyncEnabled;
+	public boolean isFullScreen() {
+		return fullScreen;
 	}
 
 	/**
-	 * Enables or disables the fullscreen option for the 'GameContainer'.
+	 * Gives back the frame rate the 'GameContainer' loops at.
 	 * 
-	 * @param fullscreen 'true' to enable fullscreen, 'false' to disable.
+	 * @return The frame rate of the 'GameContainer'.
 	 */
-	public void setFullscreen(boolean fullscreen) {
-		this.isFullscreen = fullscreen;
+	public int getFrameRate() {
+		return frameRate;
 	}
 
 	/**
-	 * Gives back the frames the 'GameContainer' is currently rendering per second.
+	 * Whether the closing of the 'GameContainer' has been requested.
 	 * 
-	 * @return The frames the 'GameContainer' is currently rendering per second.
+	 * @return 'true' if the close was requested, 'false' otherwise.
 	 */
-	public int getFrames() {
-		return frames;
+	public boolean isCloseRequested() {
+		return closeRequested;
 	}
 
 	/**
-	 * Sets the frames the 'GameContainer' renders per second.
+	 * Sets the title of the 'GameContainer' to 'title'.
+	 * This will only work if 'title' is not 'null'.
 	 * 
-	 * @param frames The framerate to set.
+	 * @param title The title to set.
 	 */
-	public void setFrames(int frames) {
-		this.frames = frames;
+	public void setTitle(String title) {
+		if(title != null) {
+			this.title = title;
+		}
+	}
+
+	/**
+	 * Sets the width of the 'GameContainer' to 'width' and its height to 'height'.
+	 * The width and the height may not be less than 0.
+	 * 
+	 * @param width The width of the 'GameContainer'.
+	 * @param height The height of the 'GameContainer'.
+	 */
+	public void setSize(int width, int height) {
+		if(width >= 0) {
+			this.width = width;
+		} else {
+			width = 0;
+		}
+		
+		if(height >= 0) {
+			this.height = height;
+		} else {
+			height = 0;
+		}
+	}
+
+	/**
+	 * Sets the vSync option of the 'GameContainer' to 'vSync'.
+	 * 
+	 * @param vSync 'true' to enable the option, 'false' to disable.
+	 */
+	public void setvSync(boolean vSync) {
+		this.vSync = vSync;
+	}
+
+	/**
+	 * Sets the fullscreen option of the 'GameContainer' to fullScreen.
+	 * 
+	 * @param fullScreen 'true' to enable the option, 'false' to disable.
+	 */
+	public void setFullScreen(boolean fullScreen) {
+		this.fullScreen = fullScreen;
+	}
+
+	/**
+	 * Sets the frame rate of the 'GameContainer' to 'frameRate'.
+	 * The frame rate may not be less than 1.
+	 * 
+	 * @param frameRate The frame rate to set.
+	 */
+	public void setFrameRate(int frameRate) {
+		if(frameRate > 0) {
+			this.frameRate = frameRate;
+		}
+	}
+
+	/**
+	 * Requests a close from the 'GameContainer'.
+	 */
+	public void requestClose() {
+		this.closeRequested = true;
 	}
 }

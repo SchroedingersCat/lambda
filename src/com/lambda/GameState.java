@@ -4,7 +4,7 @@
 package com.lambda;
 
 /**
- * 'GameStates' are used to manage different states of the 'Game' differently and separately.
+ * The 'GameState' represents a certain state of the 'Game'.
  * 
  * @author alex
  * 
@@ -26,5 +26,5 @@ public abstract class GameState {
 	 * 
 	 * @param delta The difference in time between the processing of two frames.
 	 */
-	public abstract void update(int delta);
+	public abstract void update(double delta);
 }

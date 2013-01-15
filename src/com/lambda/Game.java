@@ -16,14 +16,14 @@ import java.util.Map;
 public abstract class Game {
 	
 	/**
-	 * The ID of the currently active 'GameState'.
-	 */
-	private int activeState = -1;
-	
-	/**
 	 * A 'Map' of 'GameStates' the 'Game' can switch from/to.
 	 */
 	private Map<Integer, GameState> states;
+	
+	/**
+	 * The ID of the currently active 'GameState'.
+	 */
+	private int activeState = -1;
 
 	/**
 	 * Initializes all objects the 'Game' needs to work properly.
@@ -48,7 +48,7 @@ public abstract class Game {
 	 * 
 	 * @param delta The time that has passed between the looping of two frames.
 	 */
-	public void update(int delta) {
+	public void update(double delta) {
 		if(states.size() > 0) {
 			states.get(activeState).update(delta);
 		}
@@ -67,6 +67,24 @@ public abstract class Game {
 		if(state != null && !states.containsKey(id)) {
 			states.put(id, state);
 		}
+	}
+	
+	/**
+	 * Gives back the registered 'GameState' with the ID 'id'.
+	 * The 'GameState' must be registered and existent, otherwise 'null'
+	 * will be returned.
+	 * 
+	 * @param id The ID of the 'GameState'.
+	 * @return The 'GameState' with the ID 'id'.
+	 */
+	public GameState getState(int id) {
+		GameState state = null;
+		
+		if(states.containsKey(id)) {
+			state = states.get(id);
+		}
+		
+		return state;
 	}
 	
 	/**
