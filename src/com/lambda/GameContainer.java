@@ -91,8 +91,13 @@ public class GameContainer {
 	 */
 	protected void create() {
 		changeMode(width, height, fullScreen);
-		
 		Display.setVSyncEnabled(vSync);
+		Display.setTitle(title);
+		try {
+			Display.create();
+		} catch (LWJGLException e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -103,7 +108,11 @@ public class GameContainer {
 	 * @param fullscreen Whether the 'GameContainer' is in fullscreen mode.
 	 */
 	protected void changeMode(int width, int height, boolean fullscreen) {
-		if((width != Display.getWidth()) && (height != Display.getHeight()) && (fullscreen != Display.isFullscreen())) {
+		this.width = width;
+		this.height = height;
+		this.fullScreen = fullscreen;
+		
+		if((width != Display.getWidth()) || (height != Display.getHeight()) || (fullscreen != Display.isFullscreen())) {
 			try {
 				DisplayMode target = null;
 				

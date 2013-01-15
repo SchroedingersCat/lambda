@@ -34,22 +34,22 @@ public abstract class Game {
 	
 	/**
 	 * Calls the 'render()'-method for the currently active 'GameState'. 
-	 * This will only work if there is actually 1 or more 'GameStates' registered.
+	 * This will only work if there is a currently active 'GameState'.
 	 */
 	public void render() {
-		if(states.size() > 0) {
+		if(states.containsKey(activeState)) {
 			states.get(activeState).render();
 		}
 	}
 	
 	/**
 	 * Calls the 'update()'-method for the currently active 'GameState'.
-	 * This will only work if there is actually 1 or more 'GameStates' registered.
+	 * This will only work if there is a currently active 'GameState'.
 	 * 
 	 * @param delta The time that has passed between the looping of two frames.
 	 */
 	public void update(double delta) {
-		if(states.size() > 0) {
+		if(states.containsKey(activeState)) {
 			states.get(activeState).update(delta);
 		}
 	}
