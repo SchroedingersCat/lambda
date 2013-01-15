@@ -11,7 +11,7 @@ import static org.lwjgl.opengl.GL11.*;
  * @author alex
  * 
  */
-class GameContainer {
+public class GameContainer {
 
 	/**
 	 * The 'Game' the 'GameContainer' holds and displays.
