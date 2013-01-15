@@ -3,18 +3,15 @@
  */
 package com.lambda.gfx;
 
-import java.awt.Rectangle;
-
 import org.lwjgl.opengl.GL11;
 import org.newdawn.slick.opengl.Texture;
 
 /**
- * The 'Sprite' holds the representation of an 'Object'.
- * It is what is displayed to the screen, when anything is being
- * rendered.
+ * The 'Sprite' holds the representation of an 'Object'. It is what is displayed
+ * to the screen, when anything is being rendered.
  * 
  * @author alex
- *
+ * 
  */
 public class Sprite {
 
@@ -22,7 +19,7 @@ public class Sprite {
 	 * The width of the 'Sprite'.
 	 */
 	protected int width;
-	
+
 	/**
 	 * The height of the 'Sprite'.
 	 */
@@ -32,68 +29,66 @@ public class Sprite {
 	 * The 'Texture' to draw for this 'Sprite'.
 	 */
 	protected Texture texture;
-	
-	/**
-	 * The 'Sprites' border, as a 'Rectangle'.
-	 */
-	protected Rectangle border;
-	
+
 	/**
 	 * Creates a new 'Sprite' with a given size and a 'Texture'.
+	 * The 'width' and the 'height' of the 'Sprite' may not be less than 0.
 	 * 
-	 * @param width
-	 * @param height
+	 * @param texture The 'Texture' the 'Sprite' will use.
+	 * @param width The width of the 'Sprite'.
+	 * @param height The height of the 'Sprite'.
 	 */
 	public Sprite(Texture texture, int width, int height) {
-		this.width = width;
-		this.height = height;
+		if(width >= 0) {
+			this.width = width;
+		} else {
+			width = 0;
+		}
+		
+		if(height >= 0) {
+			this.height = height;
+		} else {
+			height = 0;
+		}
 		
 		this.texture = texture;
-		
-		this.border = new Rectangle(width, height);
 	}
-	
+
 	/**
 	 * Renders the 'Sprite' to the screen.
+	 * This will only work if the 'texture' of the 'Sprite' is not 'null'.
 	 */
 	public void render() {
-		GL11.glPushMatrix();
-		
-		texture.bind();
-		GL11.glBegin(GL11.GL_QUADS);
-		{
-			GL11.glTexCoord2f(0.0f, 0.0f);
-			GL11.glVertex2f(0, 0);
-			
-			GL11.glTexCoord2f(1.0f, 0.0f);
-			GL11.glVertex2f(width, 0);
-			
-			GL11.glTexCoord2f(1.0f, 1.0f);
-			GL11.glVertex2f(width, height);
-			
-			GL11.glTexCoord2f(0.0f, 1.0f);
-			GL11.glVertex2f(0, height);
+		if (texture != null) {
+			GL11.glPushMatrix();
+
+			texture.bind();
+			GL11.glBegin(GL11.GL_QUADS);
+			{
+				GL11.glTexCoord2f(0.0f, 0.0f);
+				GL11.glVertex2f(0, 0);
+
+				GL11.glTexCoord2f(1.0f, 0.0f);
+				GL11.glVertex2f(width, 0);
+
+				GL11.glTexCoord2f(1.0f, 1.0f);
+				GL11.glVertex2f(width, height);
+
+				GL11.glTexCoord2f(0.0f, 1.0f);
+				GL11.glVertex2f(0, height);
+			}
+			GL11.glEnd();
+			GL11.glPopMatrix();
 		}
-		GL11.glEnd();
-		GL11.glPopMatrix();
 	}
-	
+
 	/**
 	 * Executes the 'Sprites' logic.
 	 */
 	public void update() {
-		
+
 	}
 
-	/**
-	 * Gives back the border of the 'Sprite' as a 'Rectangle'.
-	 * 
-	 * @return The border of the 'Sprite'.
-	 */
-	public Rectangle getBorder() {
-		return border;
-	}
-	
 	/**
 	 * Gives back the width of the 'Sprite'.
 	 * 
@@ -113,20 +108,17 @@ public class Sprite {
 	}
 
 	/**
-	 * Sets the width of the 'Sprite'.
+	 * Sets the width of the 'Sprite' to 'width' and its height to 'height'.
 	 * 
-	 * @param width The width of the 'Sprite' to set.
+	 * @param width
+	 *            The new width of the 'Sprite'.
+	 * @param height
+	 *            The new height of the 'Sprite'.
 	 */
-	public void setWidth(int width) {
-		this.width = width;
-	}
-
-	/**
-	 * Set the height of the 'Sprite'.
-	 * 
-	 * @param height The height of the 'Sprite' to set.
-	 */
-	public void setHeight(int height) {
-		this.height = height;
+	public void setSize(int width, int height) {
+		if (width >= 0 && height >= 0) {
+			this.width = width;
+			this.height = height;
+		}
 	}
 }
