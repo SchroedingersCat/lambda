@@ -1,0 +1,8 @@
+# Java
+
+*.class
+
+# Eclipse
+.project
+.classpath
+*.prefs
