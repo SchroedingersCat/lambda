@@ -3,172 +3,131 @@
  */
 package com.lambda.entity;
 
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 /**
- * The 'EntityHandler' handles all 'Entities' in the actual context. It's easily
- * possible to manage 'Entities' using this class.
+ * The 'EntityHandler' handles the updating and rendering of 'Entities'.
  * 
  * @author alex
- * 
+ *
  */
 public class EntityHandler {
-
-	/**
-	 * Stores all entities the 'EntityHandler' manages.
-	 */
-	protected ArrayList<Entity> entityList;
 	
 	/**
-	 * Contains 'Entities' that have been removed from the list of active entities,
-	 * and are waiting for final removal.
+	 * A 'HashMap' that maps 'Entities' to their IDs.
 	 */
-	protected ArrayList<Entity> zombieList;
+	protected Map<Integer, Entity> entityMap;
 	
 	/**
-	 * Creates a new 'EntityHandler' object and initializes all needed values.
+	 * Creates a new 'EntityHandler'.
 	 */
 	public EntityHandler() {
-		entityList = new ArrayList<Entity>();
-		zombieList = new ArrayList<Entity>();
+		this.entityMap = new HashMap<Integer, Entity>();
 	}
 	
 	/**
-	 * Prints a String representation of all 'Entities' in the 'EntityHandler' to the console.
+	 * Registers the 'Entity' at the 'EntityHandler'.
+	 * The 'Entity' 'e' may not be 'null', else 'null' will be returned.
+	 * 
+	 * @param e The 'Entity' to register.
+	 * @param id The ID the 'Entity' will be identified with.
 	 */
-	public void dump() {
-		for(Entity e : entityList) {
-			System.out.println(e);
+	public void registerEntity(Entity e, int id) {
+		if(e != null) {
+			entityMap.put(id, e);
 		}
 	}
 	
 	/**
-	 * Registers an 'Entity' in the 'EntityHandler'.
+	 * Gives back the 'Entity' with the ID 'id'.
+	 * If the 'Entity' with the ID 'id' doesn't exist, 'null' will be
+	 * returned.
 	 * 
-	 * @param e
+	 * @param id The ID of the 'Entity'.
+	 * @return The 'Entity' with the 'ID' 'id'.
 	 */
-	public void registerEntity(Entity e) {
-		entityList.add(e);
-	}
-	
-	/**
-	 * Gives back the Entity with the Identifier id.
-	 * 
-	 * @param id The ID the 'Entity' has.
-	 * @return The corresponding 'Entity' or 'null' upon failure.
-	 */
-	public Entity getEntity(long id) {
+	public Entity getEntity(int id) {
 		Entity e = null;
 		
-		for(Entity t : entityList) {
-			if(t.id == id) {
-				e = t;
-				break;
-			}
+		if(entityMap.containsKey(id)) {
+			e = entityMap.get(id);
 		}
 		
 		return e;
 	}
-
+	
 	/**
-	 * Gives back the list of 'Entities' managed by this 'EntityHandler'.
+	 * Gives back the 'Map' that contains all registered 'Entities'.
 	 * 
-	 * @return An ArrayList of 'Entities' containing every 'Entity' handled by the 'EntityHandler'.
+	 * @return The 'Map' containg the 'Entities'.
 	 */
-	public ArrayList<Entity> getAll() {
-		return entityList;
+	public Map<Integer, Entity> getAll() {
+		return entityMap;
 	}
 	
 	/**
-	 * Removes an 'Entity' from the context of the 'EntityHandler'.
+	 * Removes an 'Entity' with the ID 'id' from the 'HashMap'.
 	 * 
-	 * @param e The 'Entity' that has to be removed.
+	 * @param id The ID of the 'Entity' to remove.
 	 */
-	public void removeEntity(Entity e) {
-		removeEntity(e.id);
-	}
-	
-	/**
-	 * Removes an 'Entity' from the context of the 'EntityHandler'.
-	 * 
-	 * @param id The ID of the 'Entity' that has to be removed.
-	 */
-	public void removeEntity(long id) {
-		for(int i = entityList.size() - 1; i >= 0; i--) {
-			if(entityList.get(i).id == id) {
-				entityList.remove(i);
-				break;
-			}
+	public void removeEntity(int id) {
+		if(entityMap.containsKey(id)) {
+			entityMap.remove(id);
 		}
 	}
 	
 	/**
-	 * Removes all 'Entities' from the 'EntityHandler'.
+	 * Clears the 'HashMap' of every 'Entity'.
 	 */
-	public void removeAll() {
-		entityList.clear();
+	public void clear() {
+		entityMap.clear();
 	}
 	
 	/**
-	 * Calls the 'render'-method for every 'Entity' the 'EntityHandler' manages.
+	 * Calls the 'init()'-method for every 'Entity' in the 'HashMap'.
+	 */
+	public void init() {
+		for(Entity e : entityMap.values()) {
+			e.init();
+		}
+	}
+	
+	/**
+	 * Calls the 'render()'-method for every 'Entity' in the 'HashMap'.
 	 */
 	public void render() {
-		for(Entity e : entityList) {
+		for(Entity e : entityMap.values()) {
 			e.render();
 		}
 	}
 	
 	/**
-	 * Calls the 'update'-method for every 'Entity' the 'EntityHandler' manages.
+	 * Calls the 'update()'-method for every 'Entity' in the 'HashMap'.
 	 * 
-	 * @param delta
+	 * @param delta The difference in time between the processing of two frames.
 	 */
-	public void update(int delta) {
-		for(Entity e : entityList) {
-			if(e.isActive())
-				e.update(delta);
-			else
-				zombieList.add(e);
+	public void update(double delta) {
+		for(Entity e : entityMap.values()) {
+			e.update(delta);
 		}
-		
-		for(Entity e : zombieList) {
-			entityList.remove(e);
-		}
-		
-		if(!zombieList.isEmpty())
-			zombieList.clear();
 	}
 	
 	/**
-	 * Sets the 'EntityHandler' 'eh' as the current 'EntityHandler' for 'Entities'.
+	 * Calculates a random ID that has not been used in the 'Map' map yet.
 	 * 
-	 * @param eh The new 'EntityHandler'.
+	 * @param map The 'Map' to find the ID for.
+	 * @return The new unused ID.
 	 */
-	public static void registerEntityHandler(EntityHandler eh) {
-		Entity.entityHandler = eh;
-	}
-
-	/**
-	 * Gives the next ID that has not already been used in the List list.
-	 * 
-	 * @return The next ID that has not been used.
-	 */
-	public static long getNextAvailableID(ArrayList<Entity> list) {
+	public static int nextID(Map<Integer, Entity> map) {
+		int id = -1;
+		
 		Random random = new Random();
-		long id = random.nextLong();
-
-		if (!list.isEmpty()) {
-			boolean isAvailable = false;
-			while (!isAvailable) {
-				isAvailable = true;
-				for (Entity e : list) {
-					if (e.id == id)
-						isAvailable = false;
-				}
-			}
-		}
-
+		do {
+			id = random.nextInt();
+		} while(map.containsKey(id));
+		
 		return id;
 	}
 }
