@@ -6,6 +6,8 @@ package com.lambda;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.lwjgl.opengl.GL11;
+
 /**
  * The 'Game' class contains methods every 'Game' needs to have in order
  * to work properly with the engine.
@@ -37,6 +39,7 @@ public abstract class Game {
 	 * This will only work if there is a currently active 'GameState'.
 	 */
 	public void render() {
+		clear();
 		if(states.containsKey(activeState)) {
 			states.get(activeState).render();
 		}
@@ -54,9 +57,13 @@ public abstract class Game {
 		}
 	}
 	
+	public void clear() {
+		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
+	}
+	
 	/**
 	 * Registers the 'GameState' 'state' with the ID 'id', so it can be used
-	 * by the 'Game'.
+	 * by the 'Game'. Upon registering the 'init()'-method will be called.
 	 * This will only work if the 'GameState' is not 'null' and 
 	 * if the ID 'id' is non-existent within the already registered 'GameStates'.
 	 * 
@@ -66,6 +73,7 @@ public abstract class Game {
 	public void registerState(GameState state, int id) {
 		if(state != null && !states.containsKey(id)) {
 			states.put(id, state);
+			state.init();
 		}
 	}
 	

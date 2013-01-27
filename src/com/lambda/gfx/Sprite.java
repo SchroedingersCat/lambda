@@ -3,8 +3,14 @@
  */
 package com.lambda.gfx;
 
+import java.io.IOException;
+
 import org.lwjgl.opengl.GL11;
 import org.newdawn.slick.opengl.Texture;
+import org.newdawn.slick.opengl.TextureLoader;
+import org.newdawn.slick.util.ResourceLoader;
+
+import com.lambda.LambdaException;
 
 /**
  * The 'Sprite' holds the representation of an 'Object'. It is what is displayed
@@ -31,8 +37,42 @@ public class Sprite {
 	protected Texture texture;
 
 	/**
+	 * Creates a new 'Sprite' with a given size and loads the Image for it
+	 * for the path 'path' given as a String.
+	 * The 'width' and the 'height' of the 'Sprite' may not be less than 0, otherwise
+	 * they will be set to 0.
+	 * 
+	 * @param path The path to the image to use for the 'Sprite'.
+	 * @param width The width of the 'Sprite'.
+	 * @param height The height of the 'Sprite'.
+	 * 
+	 * @throws LambdaException If the path does not point to a valid image, or the
+	 * image could not be loaded successfully.
+	 */
+	public Sprite(String path, int width, int height) throws LambdaException {
+		if(width >= 0) {
+			this.width = width;
+		} else {
+			width = 0;
+		}
+		
+		if(height >= 0) {
+			this.height = height;
+		} else {
+			height = 0;
+		}
+		
+		try {
+			this.texture = TextureLoader.getTexture("PNG", ResourceLoader.getResourceAsStream(path));
+		} catch (IOException e) {
+			throw new LambdaException("Could not load image for 'Sprite' object.");
+		}
+	}
+	
+	/**
 	 * Creates a new 'Sprite' with a given size and a 'Texture'.
-	 * The 'width' and the 'height' of the 'Sprite' may not be less than 0.
+	 * The 'width' and the 'height' of the 'Sprite' may not be less than 0, otherwise
+	 * they will be set to 0.
 	 * 
 	 * @param texture The 'Texture' the 'Sprite' will use.
 	 * @param width The width of the 'Sprite'.
@@ -57,11 +97,15 @@ public class Sprite {
 	/**
 	 * Renders the 'Sprite' to the screen.
 	 * This will only work if the 'texture' of the 'Sprite' is not 'null'.
+	 * 
+	 * @param x The x-coordinate the 'Sprite' will be rendered at.
+	 * @param y The y-coordinate the 'Sprite' will be rendered at.
 	 */
-	public void render() {
+	public void render(float x, float y) {
 		if (texture != null) {
 			GL11.glPushMatrix();
-
+			
+			GL11.glTranslatef(x, y, 0);
 			texture.bind();
 			GL11.glBegin(GL11.GL_QUADS);
 			{
@@ -86,7 +130,6 @@ public class Sprite {
 	 * Executes the 'Sprites' logic.
 	 */
 	public void update() {
-
 	}
 
 	/**

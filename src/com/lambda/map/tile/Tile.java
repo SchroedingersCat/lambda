@@ -87,12 +87,6 @@ public class Tile {
 	 * 
 	 */
 	public void render() {
-		GL11.glPushMatrix();
-		{
-			GL11.glTranslatef(position.getX(), position.getY(), 0);
-			sprite.render();
-		}
-		
-		GL11.glPopMatrix();
+		sprite.render(position.getX(), position.getY());
 	}
 }

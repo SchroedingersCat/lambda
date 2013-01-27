@@ -175,6 +175,7 @@ public abstract class Entity {
 	 * Initializes everything needed for the 'Entity' to work.
 	 */
 	public void init() {
+	
 	}
 	
 	/**
@@ -182,12 +183,7 @@ public abstract class Entity {
 	 */
 	public void render() {
 		if(sprite != null) {
-			glPushMatrix();
-			
-			glTranslatef(position.getX(), position.getY(), 0);
-			sprite.render();
-			
-			glPopMatrix();
+			sprite.render(position.getX(), position.getY());
 		}
 	}
 	
