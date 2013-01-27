@@ -1,113 +1,189 @@
 /**
- * The 'map' package holds everything needed for the correct operation of the 'Map'.
+ * 
  */
 package com.lambda.map;
 
 import java.awt.Rectangle;
 
-import com.lambda.map.tile.Tile;
+import com.lambda.map.Tile;
+import com.lambda.physics.Vector2f;
 
 /**
- * 
+ * The 'Map' is a storage for 'Tiles'. The rendering of the 'Map' can be
+ * optimized by setting a 'clipping range', which will determine which 'Tiles'
+ * to render.
  * 
  * @author alex
- *
+ * 
  */
 public class Map {
-	
+
 	/**
-	 * The 'Tiles' the 'Map' is made out of.
+	 * The 'Tiles' the 'Map' stores.
 	 */
-	protected Tile[][] map;
-	
+	protected Tile[][] tiles;
+
 	/**
-	 * Creates a new 'Map' with a given size.
+	 * The 'Area' the clipping of the 'Map' will work for.
+	 */
+	protected Rectangle clippingArea;
+
+	/**
+	 * Creates a new 'Map' with a certain amount of 'Tiles' in x- and in
+	 * y-direction.
 	 * 
-	 * @param width The amount of 'Tiles' in x - direction.
-	 * @param height The amount of 'Tiles' in y - direction.
+	 * @param width
+	 *            The number of 'Tiles' in the x-direction.
+	 * @param height
+	 *            The number of 'Tiles' in the y-direction.
 	 */
 	public Map(int width, int height) {
-		map = new Tile[width][height];
-	}
-	
-	/**
-	 * Gives back the 'Tile' at position (x, y) from the 'Map'.
-	 * If the position (x, y) does not exist, 'null' will be returned.
-	 * 
-	 * @param x The x - position of the 'Tile' in the 'Map'.
-	 * @param y The y - position of the 'Tile' in the 'Map'.
-	 * @return The 'Tile' at position (x, y).
-	 */
-	public Tile getTile(int x, int y) {
-		if(x >= 0 && x < map.length)
-			if(y >= 0 && y < map[x].length)
-				return map[x][y];
-		
-		return null;
-	}
-	
-	/**
-	 * Sets the 'Tile' at position (x, y) in the 'Map'.
-	 * If the position (x, y) does not exist, nothing will be set.
-	 * 
-	 * @param tile The 'Tile' to set at (x, y).
-	 * @param x The x - position of the 'Tile' in the 'Map'.
-	 * @param y The y - position of the 'Tile' in the 'Map'.
-	 */
-	public void setTile(Tile tile, int x, int y) {
-		if(x >= 0 && x < map.length)
-			if(y >= 0 && y < map[x].length)
-				map[x][y] = tile;
+		tiles = new Tile[width][height];
 	}
 
 	/**
-	 * Renders the whole 'Map' to the screen.
+	 * Gives back the instance of a certain 'Tile' in the 'Map' at the location
+	 * (x / y). If the coordinates are negative, or do not exist in the 'Map'
+	 * 'null' will be returned.
+	 * 
+	 * @param x
+	 *            The x-coordinate of the 'Tile' in the 'Map'.
+	 * @param y
+	 *            The y-coordinate of the 'Tile' in the 'Map'.
+	 * @return The 'Tile' at (x / y) or 'null' in case of an error.
 	 */
-	public void render() {
-		for(Tile[] _t : map) {
-			for(Tile t : _t) {
-				if(t != null)
-					t.render();
-			}
+	public Tile getTile(int x, int y) {
+		Tile tile = null;
+
+		if (x >= 0 && y >= 0 && x < getWidth() && y < getHeight()) {
+			tile = tiles[x][y];
 		}
+
+		return tile;
 	}
-	
+
 	/**
-	 * Renders a certain area of the 'Map' from (x, y) to (x + width, y + height) to the screen.
+	 * Renders all 'Tiles' of the 'Map' in the order they are stored in the
+	 * 'Map'. If a clipping area has been set, every 'Tile' outside of it, will
+	 * not be rendered. Additionally an offset for the rendering can be
+	 * specified.
 	 * 
-	 * @param x The start of the area to render in x - direction.
-	 * @param y The start of the area to render in y - direction.
-	 * @param width The width of the area to render.
-	 * @param height The height of the area to render.
+	 * @param xOffset
+	 *            The offset in x-direction for the rendering.
+	 * @param yOffset
+	 *            The offset in y-direction for the rendering.
 	 */
-	public void render(int x, int y, int width, int height) {
-		this.render(new Rectangle(x, y, width, height));
-	}
-	
-	/**
-	 * Renders the area of the 'Map' specified by the 'Rectangle' rec.
-	 * 
-	 * @param rec The 'Rectangle' that specifies the area to render.
-	 */
-	public void render(Rectangle rec) {
-		for(Tile[] _t : map) {
-			for(Tile t : _t) {
-				if(t.getPosition().getX() >= rec.x && t.getPosition().getX() <= (rec.x + rec.width)) {
-					if(t.getPosition().getY() >= rec.y && t.getPosition().getY() <= (rec.y + rec.height)) {
-						if(t != null)
-							t.render();
+	public void render(float xOffset, float yOffset) {
+		for (Tile[] _t : tiles) {
+			for (Tile t : _t) {
+				if (t != null) {
+					Rectangle rec = null;
+					boolean render = false;
+					if (clippingArea != null) {
+						rec = new Rectangle(
+								(int) (t.getPosition().getX() + xOffset),
+								(int) (t.getPosition().getY() + yOffset),
+								(int) (t.getSprite().getWidth() + xOffset),
+								(int) (t.getSprite().getHeight() + yOffset));
+						if (rec.intersects(clippingArea)) {
+							render = true;
+						}
+					} else {
+						render = true;
+					}
+
+					if (render == true) {
+						t.setPosition(t.getPosition().add(
+								new Vector2f(xOffset, yOffset)));
+						t.render();
+						t.setPosition(t.getPosition().subtract(
+								new Vector2f(xOffset, yOffset)));
 					}
 				}
 			}
 		}
 	}
-	
-	public void update(int delta) {
-		for(Tile[] _t : map) {
-			for(Tile t : _t) {
-				if(t != null)
-					t.render();
+
+	/**
+	 * Updates every 'Tile' in the 'Map'.
+	 * 
+	 * @param delta
+	 *            The difference in time between the processing of two frames.
+	 */
+	public void update(double delta) {
+		for (Tile[] _t : tiles) {
+			for (Tile t : _t) {
+				if (t != null) {
+					t.update(delta);
+				}
 			}
+		}
+	}
+
+	/**
+	 * Sets the 'Tile' in the 'Map' at the location (x / y) to the 'Tile'
+	 * 'tile'. If 'tile' is 'null', nothing will happen.
+	 * 
+	 * @param tile
+	 *            The 'Tile' to set in the 'Map' at the location (x / y).
+	 * @param x
+	 *            The x-coordinate of the 'Tile' in the 'Map'.
+	 * @param y
+	 *            The y-coordinate of the 'Tile' in the 'Map'.
+	 */
+	public void setTile(Tile tile, int x, int y) {
+		if (tile != null) {
+			if (x >= 0 && y >= 0 && x < getWidth() && y < getHeight()) {
+				tiles[x][y] = tile;
+			}
+		}
+	}
+
+	/**
+	 * Gives back the width of the 'Map'.
+	 * 
+	 * @return The amount of 'Tiles' in x-direction.
+	 */
+	public int getWidth() {
+		int width = 0;
+		if (tiles != null) {
+			width = tiles.length;
+		}
+		return width;
+	}
+
+	/**
+	 * Gives back the height of the 'Map'.
+	 * 
+	 * @return The amount of 'Tiles' in y-direction.
+	 */
+	public int getHeight() {
+		int height = 0;
+		if (tiles != null) {
+			height = tiles[0].length;
+		}
+		return height;
+	}
+
+	/**
+	 * Gives back the 'Rectangle' that represents the clipping area.
+	 * 
+	 * @return The area the clipping is active for.
+	 */
+	public Rectangle getClippingArea() {
+		return clippingArea;
+	}
+
+	/**
+	 * Sets the area the clipping work in to 'clippingArea'. This only works, if
+	 * the 'Rectangle' 'clippingArea' is not 'null'.
+	 * 
+	 * @param clippingArea
+	 *            The area the clipping will be active for.
+	 */
+	public void setClippingArea(Rectangle clippingArea) {
+		if (clippingArea != null) {
+			this.clippingArea = clippingArea;
 		}
 	}
 }
