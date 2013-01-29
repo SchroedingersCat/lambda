@@ -3,6 +3,8 @@ package com.lambda;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
+import org.lwjgl.opengl.GL11;
+
 import static org.lwjgl.opengl.GL11.*;
 
 /**
@@ -42,7 +44,7 @@ public class GameContainer {
 	 * The fullscreen option of the 'GameContainer'.
 	 */
 	protected boolean fullScreen = false;
-	
+
 	/**
 	 * The framerate the 'GameContainer' will try to render at.
 	 */
@@ -52,12 +54,12 @@ public class GameContainer {
 	 * Whether the closing of the 'GameContainer' has been requested.
 	 */
 	protected boolean closeRequested = false;
-	
+
 	/**
 	 * The last time the frame counter was updated at.
 	 */
 	private long lastCounterTime = 0;
-	
+
 	/**
 	 * Creates a new 'GameContainer' that will hold the 'Game' game. The 'Game'
 	 * may not be 'null', otherwise an LambdaException will be thrown.
@@ -93,62 +95,74 @@ public class GameContainer {
 		changeMode(width, height, fullScreen);
 		Display.setVSyncEnabled(vSync);
 		Display.setTitle(title);
-		try {
-			Display.create();
-		} catch (LWJGLException e) {
-			e.printStackTrace();
+		if (!Display.isCreated()) {
+			try {
+				Display.create();
+			} catch (LWJGLException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
 	/**
 	 * Changes the 'DisplayMode' of the 'GameContainer'.
 	 * 
-	 * @param width The width of the new 'DisplayMode'.
-	 * @param height The height of the new 'DisplayMode'.
-	 * @param fullscreen Whether the 'GameContainer' is in fullscreen mode.
+	 * @param width
+	 *            The width of the new 'DisplayMode'.
+	 * @param height
+	 *            The height of the new 'DisplayMode'.
+	 * @param fullscreen
+	 *            Whether the 'GameContainer' is in fullscreen mode.
 	 */
 	protected void changeMode(int width, int height, boolean fullscreen) {
 		this.width = width;
 		this.height = height;
 		this.fullScreen = fullscreen;
-		
-		if((width != Display.getWidth()) || (height != Display.getHeight()) || (fullscreen != Display.isFullscreen())) {
+
+		if ((width != Display.getWidth()) || (height != Display.getHeight())
+				|| (fullscreen != Display.isFullscreen())) {
 			try {
 				DisplayMode target = null;
-				
-				if(fullscreen == true) {
+
+				if (fullscreen == true) {
 					DisplayMode[] modes = Display.getAvailableDisplayModes();
 					int freq = 0;
-					
+
 					boolean found = false;
-					for(int i = 0; i < modes.length && !found; i++) {
+					for (int i = 0; i < modes.length && !found; i++) {
 						DisplayMode current = modes[i];
-						
-						if((current.getWidth() == width) && (current.getHeight() == height)) {
-							if((target == null) || (current.getFrequency() >= freq)) {
-								if((target == null) || (current.getBitsPerPixel() > target.getBitsPerPixel())) {
+
+						if ((current.getWidth() == width)
+								&& (current.getHeight() == height)) {
+							if ((target == null)
+									|| (current.getFrequency() >= freq)) {
+								if ((target == null)
+										|| (current.getBitsPerPixel() > target
+												.getBitsPerPixel())) {
 									target = current;
 									freq = target.getFrequency();
 								}
 							}
-							
-							if((current.getBitsPerPixel() == Display.getDesktopDisplayMode().getBitsPerPixel()) &&
-									(current.getFrequency() == Display.getDesktopDisplayMode().getFrequency())) {
+
+							if ((current.getBitsPerPixel() == Display
+									.getDesktopDisplayMode().getBitsPerPixel())
+									&& (current.getFrequency() == Display
+											.getDesktopDisplayMode()
+											.getFrequency())) {
 								target = current;
 								found = true;
 							}
-						} 
-					} 
+						}
+					}
 				} else {
 					target = new DisplayMode(width, height);
 				}
-				
-				if(target != null) {
+
+				if (target != null) {
 					Display.setDisplayMode(target);
 					Display.setFullscreen(fullscreen);
 				}
-			} catch(LWJGLException e) {
-				
+			} catch (LWJGLException e) {
 			}
 		}
 	}
@@ -174,7 +188,7 @@ public class GameContainer {
 
 		glLoadIdentity();
 	}
-	
+
 	/**
 	 * Starts the 'GameContainer' by setting it up and starting the loop.
 	 */
@@ -184,47 +198,48 @@ public class GameContainer {
 		
 		loop();
 	}
-	
+
 	/**
 	 * Calls the 'init-()'-method of the 'Game'.
 	 */
 	protected void init() {
-		game.init();
+		game.init(this);
 	}
-	
+
 	/**
 	 * The loop the 'GameContainer' uses to update/render everything.
 	 */
 	protected void loop() {
 		init();
-		
+
 		long lastTime = System.nanoTime();
 		int fps = 0;
-		
-		while(!Display.isCloseRequested() || closeRequested) {
+
+		while (!Display.isCloseRequested() || closeRequested) {
 			long now = System.nanoTime();
 			long diff = now - lastTime;
 			lastTime = now;
-			
+
 			double delta = diff / ((double) frameRate);
-			
+
 			lastCounterTime += diff;
 			fps++;
-			
-			if(lastCounterTime >= 1000000000) {
+
+			if (lastCounterTime >= 1000000000) {
 				System.out.println("[FPS] " + fps);
 				lastCounterTime = 0;
 				fps = 0;
 			}
-			
+
 			game.update(delta);
-			
+
+			GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
 			game.render();
-			
+
 			Display.update();
 			Display.sync(60);
 		}
-		
+
 		Display.destroy();
 	}
 
@@ -292,32 +307,35 @@ public class GameContainer {
 	}
 
 	/**
-	 * Sets the title of the 'GameContainer' to 'title'.
-	 * This will only work if 'title' is not 'null'.
+	 * Sets the title of the 'GameContainer' to 'title'. This will only work if
+	 * 'title' is not 'null'.
 	 * 
-	 * @param title The title to set.
+	 * @param title
+	 *            The title to set.
 	 */
 	public void setTitle(String title) {
-		if(title != null) {
+		if (title != null) {
 			this.title = title;
 		}
 	}
 
 	/**
-	 * Sets the width of the 'GameContainer' to 'width' and its height to 'height'.
-	 * The width and the height may not be less than 0.
+	 * Sets the width of the 'GameContainer' to 'width' and its height to
+	 * 'height'. The width and the height may not be less than 0.
 	 * 
-	 * @param width The width of the 'GameContainer'.
-	 * @param height The height of the 'GameContainer'.
+	 * @param width
+	 *            The width of the 'GameContainer'.
+	 * @param height
+	 *            The height of the 'GameContainer'.
 	 */
 	public void setSize(int width, int height) {
-		if(width >= 0) {
+		if (width >= 0) {
 			this.width = width;
 		} else {
 			width = 0;
 		}
-		
-		if(height >= 0) {
+
+		if (height >= 0) {
 			this.height = height;
 		} else {
 			height = 0;
@@ -327,7 +345,8 @@ public class GameContainer {
 	/**
 	 * Sets the vSync option of the 'GameContainer' to 'vSync'.
 	 * 
-	 * @param vSync 'true' to enable the option, 'false' to disable.
+	 * @param vSync
+	 *            'true' to enable the option, 'false' to disable.
 	 */
 	public void setvSync(boolean vSync) {
 		this.vSync = vSync;
@@ -336,20 +355,22 @@ public class GameContainer {
 	/**
 	 * Sets the fullscreen option of the 'GameContainer' to fullScreen.
 	 * 
-	 * @param fullScreen 'true' to enable the option, 'false' to disable.
+	 * @param fullScreen
+	 *            'true' to enable the option, 'false' to disable.
 	 */
 	public void setFullScreen(boolean fullScreen) {
 		this.fullScreen = fullScreen;
 	}
 
 	/**
-	 * Sets the frame rate of the 'GameContainer' to 'frameRate'.
-	 * The frame rate may not be less than 1.
+	 * Sets the frame rate of the 'GameContainer' to 'frameRate'. The frame rate
+	 * may not be less than 1.
 	 * 
-	 * @param frameRate The frame rate to set.
+	 * @param frameRate
+	 *            The frame rate to set.
 	 */
 	public void setFrameRate(int frameRate) {
-		if(frameRate > 0) {
+		if (frameRate > 0) {
 			this.frameRate = frameRate;
 		}
 	}

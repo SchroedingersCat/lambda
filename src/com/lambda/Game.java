@@ -18,6 +18,11 @@ import org.lwjgl.opengl.GL11;
 public abstract class Game {
 	
 	/**
+	 * The 'GameContainer' that holds this 'Game'.
+	 */
+	protected GameContainer gameContainer;
+	
+	/**
 	 * A 'Map' of 'GameStates' the 'Game' can switch from/to.
 	 */
 	private Map<Integer, GameState> states;
@@ -29,17 +34,20 @@ public abstract class Game {
 
 	/**
 	 * Initializes all objects the 'Game' needs to work properly.
+	 * 
+	 * @param gc The 'GameContainer' that holds this 'Game'.
 	 */
-	public void init() {
+	public void init(GameContainer gc) {
 		states = new HashMap<Integer, GameState>();
+		
+		setGameContainer(gc);
 	}
-	
+
 	/**
 	 * Calls the 'render()'-method for the currently active 'GameState'. 
 	 * This will only work if there is a currently active 'GameState'.
 	 */
 	public void render() {
-		clear();
 		if(states.containsKey(activeState)) {
 			states.get(activeState).render();
 		}
@@ -57,10 +65,6 @@ public abstract class Game {
 		}
 	}
 	
-	public void clear() {
-		GL11.glClear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
-	}
-	
 	/**
 	 * Registers the 'GameState' 'state' with the ID 'id', so it can be used
 	 * by the 'Game'. Upon registering the 'init()'-method will be called.
@@ -73,7 +77,7 @@ public abstract class Game {
 	public void registerState(GameState state, int id) {
 		if(state != null && !states.containsKey(id)) {
 			states.put(id, state);
-			state.init();
+			state.init(gameContainer, this);
 		}
 	}
 	
@@ -127,5 +131,26 @@ public abstract class Game {
 	 */
 	public int getActiveState() {
 		return activeState;
+	}
+	
+	/**
+	 * Sets the 'GameContainer' that holds the 'Game' to 'gc'.
+	 * This will only work if 'gc' is not 'null'.
+	 * 
+	 * @param gc The 'GameContainer' that holds the 'Game'.
+	 */
+	public void setGameContainer(GameContainer gc) {
+		if(gc != null) {
+			this.gameContainer = gc;
+		}
+	}
+	
+	/**
+	 * Gives back the 'GameContainer' that holds this 'Game'.
+	 * 
+	 * @return The 'GameContainer' that holds this 'Game'.
+	 */
+	public GameContainer getGameContainer() {
+		return gameContainer;
 	}
 }
