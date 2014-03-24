@@ -237,7 +237,7 @@ public class GameContainer {
 			game.render();
 
 			Display.update();
-			Display.sync(60);
+			Display.sync(frameRate);
 		}
 
 		Display.destroy();

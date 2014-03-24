@@ -6,8 +6,6 @@ package com.lambda;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.lwjgl.opengl.GL11;
-
 /**
  * The 'Game' class contains methods every 'Game' needs to have in order
  * to work properly with the engine.
