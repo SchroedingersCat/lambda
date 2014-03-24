@@ -78,6 +78,8 @@ public class SpriteSheet extends Sprite {
 				GL11.glTexCoord2f(0.0f, 1.0f);
 				GL11.glVertex2f(0, texture.getImageHeight());
 			}
+			texture.release();
+			
 			GL11.glEnd();
 			GL11.glPopMatrix();
 		}
@@ -103,6 +105,8 @@ public class SpriteSheet extends Sprite {
 
 			float w = 1 / (float) (texture.getImageWidth() / width);
 			float h = 1 / (float) (texture.getImageHeight() / height);
+			
+			GL11.glTranslatef(x, y, 0);
 
 			GL11.glBegin(GL11.GL_QUADS);
 			{

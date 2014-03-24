@@ -121,6 +121,9 @@ public class Sprite {
 				GL11.glTexCoord2f(0.0f, 1.0f);
 				GL11.glVertex2f(0, height);
 			}
+			
+			texture.release();
+			
 			GL11.glEnd();
 			GL11.glPopMatrix();
 		}
