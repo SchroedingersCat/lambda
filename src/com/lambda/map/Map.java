@@ -186,4 +186,17 @@ public class Map {
 			this.clippingArea = clippingArea;
 		}
 	}
+	
+	/**
+	 * Sets the area the clipping works in to 'clippingArea'. This only works, if
+	 * the coordinates are not negative and the size is greater 0.
+	 * 
+	 * @param x The x-coordinate.
+	 * @param y The y-coordinate.
+	 * @param width The width of the area.
+	 * @param height The height of the area.
+	 */
+	public void setClippingArea(int x, int y, int width, int height) {
+		this.setClippingArea(new Rectangle(x, y, width, height));
+	}
 }
